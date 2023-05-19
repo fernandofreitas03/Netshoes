@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import urllib.request
+from urllib.parse import urlparse
+import os
 
 url = 'https://www.netshoes.com.br/chuteiras'
 
@@ -20,12 +22,22 @@ titulo = chuteira.find(
     'div', class_="item-card__description__product-name").get_text()
 preco = chuteira.find('span', class_="full-mounted-price").get_text()
 
-images = soup.find_all('img')
 
-for img in images:
-    img_url = img['src']
-    if 'https://' not in img_url:
-        img_url = 'https:' + img_url
-    urllib.request.urlretrieve(img_url)
+image = soup.find('img')  
+if image:
+    img_url = image.get('src')
+    if img_url:
+        parsed_url = urlparse(img_url)
+        if not parsed_url.netloc: 
+            img_url = 'https:' + img_url
 
-print()
+        try:
+            filename = os.path.join('../faculdade', os.path.basename(parsed_url.path))
+            urllib.request.urlretrieve(img_url, filename)
+        except Exception as e:
+            print(f"Erro ao recuperar a imagem: {img_url}")
+            print(f"Mensagem de erro: {str(e)}")
+else:
+    print("Nenhuma imagem encontrada na página.")
+
+print(preco, titulo)
